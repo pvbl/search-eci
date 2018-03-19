@@ -11,25 +11,35 @@ def lambda_function(req,context):
     return res
     
 
-def url_filter(product,product_filters):
+def url_filter(product,price_range=[None,None],discount=None):
     website = 'https://www.elcorteingles.es/electronica/moviles-y-smartphones/' 
     product=product.lower()
+    filters_data=[]
+    if any(price_range):
+        prices = filters.prices_mapper.keys()
+        min_price,max_price=price_range
+        keys = [prices>=min_price & prices<= max_prices]
+        filters_data.append([filters.prices_mapper[key] for key in keys])
     
-    if product in list(map( lambda x: x.lower(),filters.brands.keys())):
-		query = website + 'search/?f='+ filters.brands['product']
-	    
-	else:	 
-        query = website + 'search/?s=telefono+' + product
-    if product_filters:
-		
-    
-     		
-	
-	url = query + '&s=electronica'
-    return url 
+    if ((discount!=None) & (discount in filters.discounts)):
+        filters_data.append(filters.discounts[discount])
 
-def searchElCorteIngles(product,product_pricefilters=[],product_discountfilters=[],inumber = -1,limit=0):
-    query = url_filter(product,product_filters)
+
+    if product in list(map( lambda x: x.lower(),filters.brands.keys())):
+        filters_data.append(filters.brands[product])
+        query = website + '?f='+ ','.join(map(str,filters_data)) + '&s=electronica'
+        
+    else:
+        if filters_data:     
+            query = website + 'search/?s=telefono+' + product + '?f='+ ','.join(map(str,filters_data))
+        else:
+            query = website + 'search/?s=telefono+' + product
+                 
+ 
+    return query 
+
+def searchElCorteIngles(product,min_price=None,max_price=None,discount=None,inumber = -1,limit=0):
+    query = url_filter(product,price_range=[min_price,max_price],discount=discount)
     
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
@@ -43,10 +53,10 @@ def searchElCorteIngles(product,product_pricefilters=[],product_discountfilters=
         price = 'a {0} Euros.'.format( datajson["price"]['final']) if "final" in datajson["price"] else ""
         items_parsed.append("{0}: {1} {2} ".format(i,name ,price))
     if inumber>=0:
-		items_parsed=[items_parsed[inumber]]
-	elif limit>0:
-		items_parsed=items_parsed[:limit]
-	
+        items_parsed=[items_parsed[inumber]]
+    elif limit>0:
+        items_parsed=items_parsed[:limit]
+    
     speech = '.\n'.join(items_parsed)
     return  { "speech": speech,
               "displayText": speech,

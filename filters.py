@@ -1,17 +1,17 @@
 ## script que mapea filtros de precios, descuentos y marcas a la url de ElCorte Ingles
 
-brands = { "Apple":102979,
-        "Samsung":112395, 
-        "Huawei":107952,
-        "XIAOMI":193851,
-        "Sony":112899,
+brands = { "apple":102979,
+        "samsung":112395, 
+        "huawei":107952,
+        "xiaomi":193851,
+        "sony":112899,
         "bq":103964,
 }
 
-discounts={ "10":133543,
-     "20":133544,
-     "30":133545,
-     "40":133546,
+discounts={ 10:133543,
+     20:133544,
+     30:133545,
+     40:133546,
 }
 
 
