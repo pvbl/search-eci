@@ -33,7 +33,7 @@ def lambda_function(req,context):
     
 
 def searchElCorteIngles(product,limit = -1,inbound=0):
-    website = 'https://www.elcorteingles.es/'
+    website = 'https://www.elcorteingles.es/electronica/moviles-y-smartphones/'
     query = website + 'search/?s=telefono+' + product
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
@@ -69,24 +69,5 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print("Starting app on port %d" % port)
     app.run(debug=False, port=port, host='0.0.0.0')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
