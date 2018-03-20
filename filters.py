@@ -16,7 +16,7 @@ discounts={ 10:133543,
 
 
 
-__prices = list(range(25,250,25)) + list(range(250,500,50)) + list(range(500,1000,100)) + list(range(1000,1500,250))
+__prices = list(range(50,250,25)) + list(range(250,500,50)) + list(range(500,1000,100)) + list(range(1000,1500,250))
 __mapps = list(range(20004,20024))
 
 prices_mapper = dict(zip(__prices,__mapps)) 
