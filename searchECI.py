@@ -16,6 +16,9 @@ def lambda_function(req,context):
 
 
 def url_filter(product,price_range=[None,None],discount=None):
+    """
+    crea la url y genera filtros para las opciones indicadas en el json del Post.
+    """
     website = 'https://www.elcorteingles.es/electronica/moviles-y-smartphones/' 
     product=product.lower()
     filters_data=[]
@@ -24,14 +27,16 @@ def url_filter(product,price_range=[None,None],discount=None):
         prices = filters.prices_mapper.keys()
         
         min_price, max_price = price_range
-        max_price = max_price if max_price else max(filters.prices_mapper.keys())
-        min_price = min_price if min_price else min(filters.prices_mapper.keys())
+        max_price = max_price if max_price else max(prices)
+        min_price = min_price if min_price else min(prices)
         keys = list(map(lambda x: x if ((x >= min_price) & (x<= max_price)) else None,prices))
         _ = [filters_data.append(filters.prices_mapper[key]) for key in keys if key]
     
     # en caso de que el usuario haya pedido con descuentos
-    if ((discount!=None) & (discount in filters.discounts)):
-        filters_data.append(filters.discounts[discount])
+    if discount:
+        discounts = filters.discounts.keys()
+        keys = list(map(lambda x: x if (x >= discount) else None,discounts))
+        _ = [filters_data.append(filters.discounts[key]) for key in keys if key]
 
 
     if product in list(map( lambda x: x.lower(),filters.brands.keys())):
@@ -49,6 +54,9 @@ def url_filter(product,price_range=[None,None],discount=None):
 
 
 def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0):
+    """
+    extrae los items de una URL del corte ingles generada con filtros.
+    """
     query = url_filter(product,price_range=[price_min,price_max],discount=discount)
     
     r = requests.get(query)
@@ -63,9 +71,11 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     for i, item in enumerate(items):
         datajson = json.loads(item.find("span")['data-json'])
         name = datajson["name"]
-        href= item.find("img")['src']
+        img_href= item.find("img")['src']
+        href = 'https://www.elcorteingles.es'+item.find('a',{'data-event':"product_click"})['href']
         price =datajson["price"]['final'] if "final" in datajson["price"] else None
-        item_json={'name':name,'url':href,'price':price,'index':i}
+        discount=int(item.find('span',{'class':'discount'}).text.replace("%","")) if item.find('span',{'class':'discount'})  else None
+        item_json={'name':name,'image':img_href,'price':price,'index':i,'discount':discount,'href':href}
         #items_parsed.append("{0}: {1} {2} ".format(i,name ,price))
         items_parsed.append(item_json)
     if inumber>=0:
