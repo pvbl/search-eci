@@ -64,7 +64,7 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
         datajson = json.loads(item.find("span")['data-json'])
         name = datajson["name"]
         href= item.find("img")['src']
-        price = 'a {0} Euros.'.format( datajson["price"]['final']) if "final" in datajson["price"] else ""
+        price =datajson["price"]['final'] if "final" in datajson["price"] else None
         item_json={'name':name,'url':href,'price':price,'index':i}
         #items_parsed.append("{0}: {1} {2} ".format(i,name ,price))
         items_parsed.append(item_json)
@@ -73,28 +73,33 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     elif limit>0:
         items_parsed=items_parsed[:limit]
     return items_parsed
-    
 
-def request_el_corte_ingles_as_json(items_parsed):
-    return json.dumps(items_parsed)    
 
 def request_el_corte_ingles_as_DialogFlow_json(items_parsed):
     
-    items=[ '{0}:{1} a {2}\n'.format(item['index'],item['name'],item['price']) for item in items_parsed]
-    speech = '.\n'.join(items)
+    items=[ '{0}:{1} a {2}.'.format(item['index'],item['name'], '{0} Euros'.format(item['price']) if item['price'] else  "NA") for item in items_parsed]
+    speech = '\n '.join(items)
     return  { "speech": speech,
               "displayText": speech,
               "source": "apiai-eci"
             }
 
-def response_webhook(req,parameter='item'):      
+def response_db(req,parameter='item'):      
     result = req.get("result")
     parameters = result.get("parameters")
     item = parameters.get(parameter)
-    inumber=parameters.get("inumber") if parameters.get("inumber") else 0
+    inumber=parameters.get("inumber") if parameters.get("inumber") else -1
     limit=parameters.get("limit") if parameters.get("limit") else -1
     price_min=parameters.get("price_min") if parameters.get("price_min") else None
     price_max=parameters.get("price_max") if parameters.get("price_max") else None
     discount=parameters.get("discount") if parameters.get("discount") else None
-    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = -1,limit=0)
+    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,limit=limit)
+    return items_parsed
+
+def response_webhook(req,parameter='item'):      
+    items_parsed = response_db(req,parameter=parameter)
     return request_el_corte_ingles_as_DialogFlow_json(items_parsed)
+
+
+
+
