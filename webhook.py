@@ -15,7 +15,7 @@ def webhook():
     req = request.get_json(silent=True, force=True)
     print(json.dumps(req, indent=4))
     
-    res = searchECI.makeResponse(req)
+    res = searchECI.response_webhook(req)
     
     res = json.dumps(res, indent=4)
     # print(res)
@@ -23,8 +23,16 @@ def webhook():
     r.headers['Content-Type'] = 'application/json'
     return r
 
-  
-
+@app.route('/searcheci', methods=['POST'])
+def search_eci():
+    req = request.get_json(silent=True, force=True)
+    print(json.dumps(req, indent=4))
+    
+    res = searchECI.response_db(req)
+    res = json.dumps(res, indent=4)
+    r = make_response(res)
+    r.headers['Content-Type'] = 'application/json'
+    return r
 
 
 
