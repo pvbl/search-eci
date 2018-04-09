@@ -71,7 +71,7 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     for i, item in enumerate(items):
         datajson = json.loads(item.find("span")['data-json'])
         name = datajson["name"]
-        img_href= item.find("img")['src']
+        img_href= "https:"+item.find("img")['src']
         href = 'https://www.elcorteingles.es'+item.find('a',{'data-event':"product_click"})['href']
         price =datajson["price"]['final'] if "final" in datajson["price"] else None
         discount=int(item.find('span',{'class':'discount'}).text.replace("%","")) if item.find('span',{'class':'discount'})  else None
