@@ -4,22 +4,22 @@ import requests
 import json
 import filters
      
-def lambda_function(req,context):
-    """
-    funcion lambda para su uso en AWS lambda
-    """
-    req = request.get_json(silent=True, force=True)
-    res = makeResponse(req)
-    res = json.dumps(res, indent=4)
-    return res
-  
 
 
-def url_filter(product,price_range=[None,None],discount=None):
+
+def url_filter(product,price_range=[None,None],discount=None,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono'):
     """
     crea la url y genera filtros para las opciones indicadas en el json del Post.
     """
-    website = 'https://www.elcorteingles.es/electronica/moviles-y-smartphones/' 
+    
+    
+    
+    #category='moda'
+    #subcategory=''
+    #helper_search='mujer'
+    if category not in filters.categories:
+        raise ValueError("invalidad category. Check in filters.py or in the website")
+    website = 'https://www.elcorteingles.es/{0}/{1}'.format(category,subcategory if subcategory+'/' else '') 
     product=product.lower()
     filters_data=[]
     # en caso de que el usuario quiera un producto en un rango de precio
@@ -32,44 +32,47 @@ def url_filter(product,price_range=[None,None],discount=None):
         keys = list(map(lambda x: x if ((x >= min_price) & (x<= max_price)) else None,prices))
         _ = [filters_data.append(filters.prices_mapper[key]) for key in keys if key]
     
-    # en caso de que el usuario haya pedido con descuentos
+    # en caso de que el usuario haya pedido con descuentos (contiene errores hay que tener cuidado)
     if discount:
         discounts = filters.discounts.keys()
         keys = list(map(lambda x: x if (x >= discount) else None,discounts))
         _ = [filters_data.append(filters.discounts[key]) for key in keys if key]
 
 
-    if product in list(map( lambda x: x.lower(),filters.brands.keys())):
+    if product in list(map( lambda x: x.lower() , filters.brands.keys())):
         filters_data.append(filters.brands[product])
-        query = website + '?f='+ ','.join(map(str,filters_data)) + '&s=electronica'
+        query = website + '?f='+ ','.join(map(str,filters_data)) + '&s={0}'.format(category)
         
     else:
         if filters_data:     
-            query = website + 'search/?s=telefono+' + product + '?f='+ ','.join(map(str,filters_data))
+            query = website + 'search/?s={0}+'.format(helper_search) + product + '?f='+ ','.join(map(str,filters_data))
         else:
-            query = website + 'search/?s=telefono+' + product
+            query = website + 'search/?s={0}+'.format(helper_search) + product
                  
- 
     return query 
 
 
 def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0):
     """
-    extrae los items de una URL del corte ingles generada con filtros.
+    extrae los items de una URL del corte ingles generada con los filtros de la función url_filter.
     """
     query = url_filter(product,price_range=[price_min,price_max],discount=discount)
-    
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
-    items = soup.find("ul",{"class":"product-list 4"})
-    if not items:
-        items=[]
+    items = soup.find("ul",{"class":"product-list 4"}) if soup.find("ul",{"class":"product-list 4"}) else soup.find("ul",{"class":"product-list"})
+
+    if not items: 
+       items=[]
     else:   
         items = items.find_all("li")
     #speech = "Los {0} Productos mas vendidos son:".format(str(limit) if limit else
     items_parsed=[] 
     for i, item in enumerate(items):
-        datajson = json.loads(item.find("span")['data-json'])
+        dt= item.find("span")
+        if dt:
+            datajson = json.loads(dt['data-json'])
+        else:
+            continue
         name = datajson["name"]
         img_href= "https:"+item.find("img")['src']
         href = 'https://www.elcorteingles.es'+item.find('a',{'data-event':"product_click"})['href']
@@ -85,18 +88,18 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     return items_parsed
 
 
-def request_el_corte_ingles_as_DialogFlow_json(items_parsed):
-    
-    items=[ '{0}:{1} a {2}.'.format(item['index'],item['name'], '{0} Euros'.format(item['price']) if item['price'] else  "NA") for item in items_parsed]
-    speech = '\n '.join(items)
-    return  { "speech": speech,
-              "displayText": speech,
-              "source": "apiai-eci"
-            }
+  
 
-
-
-def response_db(req,parameter='item'):      
+def response_db(req,parameter='item'):   
+    """
+    Respuesta generada a partir del request (JSON de entrada). Los posibles parametros de JSON de entrada son:
+    inumber: si hemos con anterioridad mirado una lista de items y queremos el número inumber
+    limit: número maximo de elementos representados
+    price_min: precio mínimo del producto
+    price_max: precio máximo del producto
+    discount: mínimo descuento con el que queremos ver el producto (en fase alpha, en pruebas)
+    """   
+    #Extraemos parametros posibles del JSON de entrada
     result = req.get("result")
     parameters = result.get("parameters")
     item = parameters.get(parameter)
@@ -105,6 +108,8 @@ def response_db(req,parameter='item'):
     price_min=parameters.get("price_min") if parameters.get("price_min") else None
     price_max=parameters.get("price_max") if parameters.get("price_max") else None
     discount=parameters.get("discount") if parameters.get("discount") else None
+    
+    # A partir de estos parametros generamos el JSON de salida
     items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,limit=limit)
     return items_parsed
 
@@ -115,16 +120,20 @@ def response_webhook(req,parameter='item'):
 
 
 def request_item_url(url):
+    """
+    Extracción de entidades a partir de la url de un producto. 
+    """
     r = requests.get(url)
     soup = BeautifulSoup(r.content,"html5lib")
+    # buscamos en features caracteristicas e informacion del producto
     features = soup.find("div",{"id":"features"})
     item_name = soup.find('div',{'id':'product-info'}).find('h2',{'class':'title'}).text
     description=features.find('div',{'id':'description'})
-    description=description.text if description else "No disponible"
+    description=description.text if description else "No disponible" # por si acaso no hay disponible descripcion
     price = soup.find('span',{'class':'current sale'})
-    price=price.text if price else "No disponible"
+    price=price.text if price else "No disponible" # por si acaso no hay disponible precio
     img = 'https:'+soup.find('img',{'id':'product-image-placer'})['src']
-    features_esp = soup.find("div",{"class":"product-features c12"})
+    features_esp = soup.find("div",{"class":"product-features c12"}) # textraccion de caracteristicas del item
     features_key = features_esp.find_all('dt')
     features_value = features_esp.find_all('dd')
     features_dict = {k.text:v.text for k,v in zip(features_key,features_value)}
@@ -138,17 +147,41 @@ def request_item_url(url):
     }
 
 
-def response_db_item(req,parameter='item'):      
+def response_db_item(req,parameter='item'):     
+    """
+    extraemos los parámetros del request a partir de la url del producto. El JSON de entrada tiene la forma:
+    href: url del item
+    el json de salida tiene la forma descripta en la función request_item_url()
+    """ 
     result = req.get("result")
     parameters = result.get("parameters")
     
     url = parameters.get("href") if parameters.get("href") else None
-    if not url:
-        item = parameters.get("item") if parameters.get("item") else None
         
-
+    # extraccion de los datos del producto con la url
     items_parsed = request_item_url(url)
     return items_parsed
 
 
 
+
+
+def request_el_corte_ingles_as_DialogFlow_json(items_parsed):
+    """
+    devuelve el speech reconocido por DialogFlow.
+    """
+    items=[ '{0}:{1} a {2}.'.format(item['index'],item['name'], '{0} Euros'.format(item['price']) if item['price'] else  "NA") for item in items_parsed]
+    speech = '\n '.join(items)
+    return  { "speech": speech,
+              "displayText": speech,
+              "source": "apiai-eci"
+            }
+
+def lambda_function_multipleItems(req,context):
+    """
+    funcion lambda para levantar la búsqueda de múltiples Items en AWS lambda.
+    """
+    req = request.get_json(silent=True, force=True)
+    res = response_webhook(req)
+    res = json.dumps(res, indent=4)
+    return res

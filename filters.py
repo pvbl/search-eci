@@ -1,5 +1,15 @@
 ## script que mapea filtros de precios, descuentos y marcas a la url de ElCorte Ingles
 
+
+categories = ['electronica','moda','electrodomesticos','hogar','bebes','juguetes','videojuegos','perfumeria','regalos-originales','libros','supermercado']
+
+
+
+
+
+
+
+#### Electronica
 brands = { "apple":102979,
         "samsung":112395, 
         "huawei":107952,
@@ -15,7 +25,7 @@ discounts={ 10:133543,
 }
 
 
-
+### ojo! no esta bien. ECI mapea en 19 categorias de precios pero son variables entre min y max
 __prices = list(range(50,250,25)) + list(range(250,500,50)) + list(range(500,1000,100)) + list(range(1000,1500,250))
 __mapps = list(range(20004,20024))
 

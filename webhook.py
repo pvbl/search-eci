@@ -12,6 +12,9 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    """
+    webhook para consumir desde Dialogflow
+    """
     req = request.get_json(silent=True, force=True)
     print(json.dumps(req, indent=4))
     
@@ -25,6 +28,9 @@ def webhook():
 
 @app.route('/searcheci', methods=['POST'])
 def search_eci():
+    """
+    ruta para que devuelva una lista de items a partir de unos parametros determinados como JSON.
+    """
     req = request.get_json(silent=True, force=True)
     print(json.dumps(req, indent=4))
     
@@ -37,6 +43,9 @@ def search_eci():
 
 @app.route('/returnItem', methods=['POST'])
 def return_item():
+    """
+    ruta para la devolucion de información de un item concreto como JSON.
+    """
     req = request.get_json(silent=True, force=True)
     print(json.dumps(req, indent=4))
     
