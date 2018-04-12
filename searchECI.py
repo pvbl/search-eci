@@ -132,6 +132,7 @@ def request_item_url(url):
             'description':description,
             'price':price,
             'img':img,
+            'href':url,
             'features':features_dict,
     
     }
