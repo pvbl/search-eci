@@ -35,6 +35,19 @@ def search_eci():
     return r
 
 
+@app.route('/returnItem', methods=['POST'])
+def return_item():
+    req = request.get_json(silent=True, force=True)
+    print(json.dumps(req, indent=4))
+    
+    res = searchECI.response_db_item(req)
+    res = json.dumps(res, indent=4)
+    r = make_response(res)
+    r.headers['Content-Type'] = 'application/json'
+    return r
+
+
+
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))

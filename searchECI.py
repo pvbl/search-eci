@@ -94,6 +94,8 @@ def request_el_corte_ingles_as_DialogFlow_json(items_parsed):
               "source": "apiai-eci"
             }
 
+
+
 def response_db(req,parameter='item'):      
     result = req.get("result")
     parameters = result.get("parameters")
@@ -110,6 +112,42 @@ def response_webhook(req,parameter='item'):
     items_parsed = response_db(req,parameter=parameter)
     return request_el_corte_ingles_as_DialogFlow_json(items_parsed)
 
+
+
+def request_item_url(url):
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content,"html5lib")
+    features = soup.find("div",{"id":"features"})
+    item_name = soup.find('div',{'id':'product-info'}).find('h2',{'class':'title'}).text
+    description=features.find('div',{'id':'description'})
+    description=description.text if description else "No disponible"
+    price = soup.find('span',{'class':'current sale'})
+    price=price.text if price else "No disponible"
+    img = 'https:'+soup.find('img',{'id':'product-image-placer'})['src']
+    features_esp = soup.find("div",{"class":"product-features c12"})
+    features_key = features_esp.find_all('dt')
+    features_value = features_esp.find_all('dd')
+    features_dict = {k.text:v.text for k,v in zip(features_key,features_value)}
+    return {'name': item_name,
+            'description':description,
+            'price':price,
+            'img':img,
+            'features':features_dict,
+    
+    }
+
+
+def response_db_item(req,parameter='item'):      
+    result = req.get("result")
+    parameters = result.get("parameters")
+    
+    url = parameters.get("href") if parameters.get("href") else None
+    if not url:
+        item = parameters.get("item") if parameters.get("item") else None
+        
+
+    items_parsed = request_item_url(url)
+    return items_parsed
 
 
 
