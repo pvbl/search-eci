@@ -7,7 +7,7 @@ import filters
 
 
 
-def url_filter(product,price_range=[None,None],discount=None,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono'):
+def url_filter(product,price_range=[None,None],discount=None,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1):
     """
     crea la url y genera filtros para las opciones indicadas en el json del Post.
     """
@@ -17,6 +17,7 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
     #category='moda'
     #subcategory=''
     #helper_search='mujer'
+    
     if category not in filters.categories:
         raise ValueError("invalidad category. Check in filters.py or in the website")
     website = 'https://www.elcorteingles.es/{0}/{1}'.format(category,subcategory if subcategory+'/' else '') 
@@ -45,9 +46,9 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
         
     else:
         if filters_data:     
-            query = website + 'search/?s={0}+'.format(helper_search) + product + '?f='+ ','.join(map(str,filters_data))
+            query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product + '?f='+ ','.join(map(str,filters_data))
         else:
-            query = website + 'search/?s={0}+'.format(helper_search) + product
+            query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product
                  
     return query 
 
