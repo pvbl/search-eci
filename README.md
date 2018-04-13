@@ -37,14 +37,64 @@ Donde los parámetros a modificar en el JSON son los que se encuentran dentro de
  
 ### Ruta <url>/searcheci
 - item: producto a filtrar (ej. samsung, móvil (para caso genérico), iphone...)
-- price\_min: precio minimo de los productos.
-- price\_max: precio máximo de los productos.
-- discount: precio minimo.
-- limit: el número de productos a ser mostrados
-- inbound: exactamente el numero del producto deseado (observado anteriormente)
+- category: categoria a la que pertenece el producto (ropa,electronica,...) (opcional)
+- subcategory: subcategoria a la que pertenece el producto (opcional)
+- helper_search: Para evitar que acabe en el land de la pagina, introduccion de un elemento clave que evite esto. P.e. telefono (opcional)
+- price\_min: precio minimo de los productos. (opcional)
+- price\_max: precio máximo de los productos. (opcional)
+- discount: precio minimo. (opcional)
+- limit: el número de productos a ser mostrados (opcional)
+- inbound: exactamente el numero del producto deseado ej. el numeroo 5 (opcional)
+
+
+
+#### Ejemplos 1
+Por defecto busca en category='electronica', subcategory = 'moviles-y-smartphones' y helper_search='telefono'.
+```
+{"result":{
+"parameters":{
+	"item":"Samsung",
+	"limit":5
+	}
+  }
+}
+```
+
+#### Ejemplos 2
+Buscar articulos en ropa de mujer
+```
+{"result":{
+"parameters":{
+    "item":"",
+    "category":"moda",
+    "subcategory":"",
+    "helper_search":"mujer"
+   }
+  }
+}
+```
+
 
 ### Ruta <url>/returnItem
-- href: ruta del producto: (Ej. "href":"https://www.elcorteingles.es/moda/A23426124-chaqueta-de-mujer-tintoretto-con-cinturon-y-cuello-alto/")
+- href: ruta URL del producto en ECI 
+#### Ejemplo Post
+url: localhost:5000/returnItem
+method: POST
+body
+```
+{
+  "result": 
+      {"parameters":
+            {
+                "href":"https://www.elcorteingles.es/moda/A23426124-chaqueta-de-mujer-tintoretto-con-cinturon-y-cuello-alto/"
+                
+            }
+  }
+}
+```
+
+
+
 
 
 
