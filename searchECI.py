@@ -11,13 +11,7 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
     """
     crea la url y genera filtros para las opciones indicadas en el json del Post.
     """
-    
-    
-    
-    #category='moda'
-    #subcategory=''
-    #helper_search='mujer'
-    
+
     if category not in filters.categories:
         raise ValueError("invalidad category. Check in filters.py or in the website")
     website = 'https://www.elcorteingles.es/{0}/{1}'.format(category,subcategory if subcategory+'/' else '') 
@@ -57,11 +51,12 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
     return query 
 
 
-def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0):
+def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1):
     """
     extrae los items de una URL del corte ingles generada con los filtros de la función url_filter.
     """
-    query = url_filter(product,price_range=[price_min,price_max],discount=discount)
+    query = url_filter(product,price_range=[price_min,price_max],discount=discount,category=category,subcategory=subcategory,helper_search=helper_search,page=page)
+    print(query)
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
     # buscamos la lista de productos que se muestra en la web (he visto dos casos de clases que los contiene
@@ -72,7 +67,6 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
        items=[]
     else:   
         items = items.find_all("li")
-    #speech = "Los {0} Productos mas vendidos son:".format(str(limit) if limit else
     items_parsed=[] 
     for i, item in enumerate(items):
         dt= item.find("span")
@@ -118,15 +112,14 @@ def response_db(req,parameter='item'):
     price_min=parameters.get("price_min") if parameters.get("price_min") else None
     price_max=parameters.get("price_max") if parameters.get("price_max") else None
     discount=parameters.get("discount") if parameters.get("discount") else None
-    
+    category=parameters.get("category") if parameters.get("category") is not None else 'electronica'
+    subcategory=parameters.get("subcategory") if parameters.get("subcategory") is not None else 'moviles-y-smartphones'
+    helper_search=parameters.get("helper_search") if parameters.get("helper_search") is not None else 'telefono'
+    page=parameters.get("page") if parameters.get("page") else 1
+
     # A partir de estos parametros generamos el JSON de salida
-    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,limit=limit)
+    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,limit=limit,category=category,subcategory=subcategory,helper_search=helper_search,page=page)
     return items_parsed
-
-def response_webhook(req,parameter='item'):      
-    items_parsed = response_db(req,parameter=parameter)
-    return request_el_corte_ingles_as_DialogFlow_json(items_parsed)
-
 
 
 def request_item_url(url):
@@ -186,6 +179,17 @@ def request_el_corte_ingles_as_DialogFlow_json(items_parsed):
               "displayText": speech,
               "source": "apiai-eci"
             }
+
+
+def response_webhook(req,parameter='item'): 
+    """
+    respuesta para DialogFlow
+    """     
+    items_parsed = response_db(req,parameter=parameter)
+    return request_el_corte_ingles_as_DialogFlow_json(items_parsed)
+
+
+
 
 def lambda_function_multipleItems(req,context):
     """
