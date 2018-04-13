@@ -19,6 +19,7 @@ $ python3 webhook.py
 
 ## parametros del POST
 El JSON que se envía en el body del POST tiene la forma:
+```
 {
   "result": 
       {"parameters":
@@ -30,7 +31,7 @@ El JSON que se envía en el body del POST tiene la forma:
             }
   }
 }
-
+```
 Donde los parámetros a modificar en el JSON son los que se encuentran dentro del campo parameters. Esto se ha realizado por motivos de cómo envía los datos de Dialogflow.
 
  
@@ -49,8 +50,8 @@ Donde los parámetros a modificar en el JSON son los que se encuentran dentro de
 
 # Errores y cosas a tener en cuenta para futuras versiones
 - filtrar por precio no está bien. El corte Inglés tiene 19 categorías de división de precios variables entre máximo y mínimo. El primero máximo y mínimo es desconocido. No tengo claro si sucede lo mismo con discount.
-- He probado con pocas categorías y subcategorías, sería necesario verificar que funciona bien.
-- A un futuro estaría bien añadir page, category, subcategory en el JSON de request.
+- He probado con pocas categorías y subcategorías diferentes a moviles, sería necesario verificar que funciona bien.
+- A un futuro estaría bien añadir page, category, subcategory en el JSON de request. (Sencillo)
 
 
 

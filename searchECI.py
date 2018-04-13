@@ -24,26 +24,30 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
     product=product.lower()
     filters_data=[]
     # en caso de que el usuario quiera un producto en un rango de precio
+    ## verifica que el usuario ha metido o precio minimo o maximo
     if any(price_range):
+        # mapea con los escritos en filters.prices_mapper
         prices = filters.prices_mapper.keys()
         
         min_price, max_price = price_range
+        # en caso de que no establecer maximo o minimo se coge el de filtros maximo o minimo
         max_price = max_price if max_price else max(prices)
         min_price = min_price if min_price else min(prices)
+        
         keys = list(map(lambda x: x if ((x >= min_price) & (x<= max_price)) else None,prices))
         _ = [filters_data.append(filters.prices_mapper[key]) for key in keys if key]
     
-    # en caso de que el usuario haya pedido con descuentos (contiene errores hay que tener cuidado)
+    # en caso de que el usuario haya pedido con descuentos
     if discount:
         discounts = filters.discounts.keys()
         keys = list(map(lambda x: x if (x >= discount) else None,discounts))
         _ = [filters_data.append(filters.discounts[key]) for key in keys if key]
 
-
+    # en caso de estar nuestro producto (ej samsung) en nuestro filters.brands, lo utiliza para filtrar
+    # en caso contrario (else), hace una busqueda generica 
     if product in list(map( lambda x: x.lower() , filters.brands.keys())):
         filters_data.append(filters.brands[product])
-        query = website + '?f='+ ','.join(map(str,filters_data)) + '&s={0}'.format(category)
-        
+        query = website + '/{0}/?f='.format(page)+ ','.join(map(str,filters_data)) + '&s={0}'.format(category)
     else:
         if filters_data:     
             query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product + '?f='+ ','.join(map(str,filters_data))
@@ -60,8 +64,10 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     query = url_filter(product,price_range=[price_min,price_max],discount=discount)
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
+    # buscamos la lista de productos que se muestra en la web (he visto dos casos de clases que los contiene
+    # product-list 4 (en smatphones) y product-list (en ropa)
     items = soup.find("ul",{"class":"product-list 4"}) if soup.find("ul",{"class":"product-list 4"}) else soup.find("ul",{"class":"product-list"})
-
+    # si no encuentra items, devuelve items=[]
     if not items: 
        items=[]
     else:   
@@ -74,6 +80,7 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
             datajson = json.loads(dt['data-json'])
         else:
             continue
+        # extraemos datos por item que vamos a meter en el JSON de respuesta
         name = datajson["name"]
         img_href= "https:"+item.find("img")['src']
         href = 'https://www.elcorteingles.es'+item.find('a',{'data-event':"product_click"})['href']
@@ -82,6 +89,8 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
         item_json={'name':name,'image':img_href,'price':price,'index':i,'discount':discount,'href':href}
         #items_parsed.append("{0}: {1} {2} ".format(i,name ,price))
         items_parsed.append(item_json)
+    # en caso de haberle puesto un elemento determinado de la lista de productos, devolvemos ese
+    # si hemos puesto limite idem
     if inumber>=0:
         items_parsed=[items_parsed[inumber]]
     elif limit>0:
