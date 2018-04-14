@@ -14,7 +14,7 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
 
     if category not in filters.categories:
         raise ValueError("invalidad category. Check in filters.py or in the website")
-    website = 'https://www.elcorteingles.es/{0}/{1}'.format(category,subcategory if subcategory+'/' else '') 
+    website = 'https://www.elcorteingles.es/{0}/{1}'.format(category,subcategory+'/' if subcategory else '') 
     product=product.lower()
     filters_data=[]
     # en caso de que el usuario quiera un producto en un rango de precio
