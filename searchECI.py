@@ -51,7 +51,7 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
     return query 
 
 
-def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1):
+def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0,init_item=0,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1):
     """
     extrae los items de una URL del corte ingles generada con los filtros de la función url_filter.
     """
@@ -86,9 +86,11 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     # en caso de haberle puesto un elemento determinado de la lista de productos, devolvemos ese
     # si hemos puesto limite idem
     if inumber>=0:
-        items_parsed=[items_parsed[inumber]]
+        items_parsed=[items_parsed[inumber]]        
     elif limit>0:
-        items_parsed=items_parsed[:limit]
+        items_parsed=items_parsed[init_item:(init_item+limit)]
+    
+        
     return items_parsed
 
 
@@ -116,9 +118,10 @@ def response_db(req,parameter='item'):
     subcategory=parameters.get("subcategory") if parameters.get("subcategory") is not None else 'moviles-y-smartphones'
     helper_search=parameters.get("helper_search") if parameters.get("helper_search") is not None else 'telefono'
     page=parameters.get("page") if parameters.get("page") else 1
+    init_item=parameters.get("init_item") if parameters.get("init_item") else 0
 
     # A partir de estos parametros generamos el JSON de salida
-    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,limit=limit,category=category,subcategory=subcategory,helper_search=helper_search,page=page)
+    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,init_item=init_item,limit=limit,category=category,subcategory=subcategory,helper_search=helper_search,page=page)
     return items_parsed
 
 
