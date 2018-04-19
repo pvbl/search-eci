@@ -77,10 +77,11 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
         # extraemos datos por item que vamos a meter en el JSON de respuesta
         name = datajson["name"]
         img_href= "https:"+item.find("img")['src']
+        id_ref=item.find("img")["id"].split('-')[1]       
         href = 'https://www.elcorteingles.es'+item.find('a',{'data-event':"product_click"})['href']
         price =datajson["price"]['final'] if "final" in datajson["price"] else None
         discount=int(item.find('span',{'class':'discount'}).text.replace("%","")) if item.find('span',{'class':'discount'})  else None
-        item_json={'name':name,'image':img_href,'price':price,'index':i,'discount':discount,'href':href}
+        item_json={'name':name,'image':img_href,'price':price,'index':i,'discount':discount,'href':href,'id':id_ref}
         #items_parsed.append("{0}: {1} {2} ".format(i,name ,price))
         items_parsed.append(item_json)
     # en caso de haberle puesto un elemento determinado de la lista de productos, devolvemos ese
