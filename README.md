@@ -102,6 +102,6 @@ body
 - filtrar por precio no está bien. El corte Inglés tiene 19 categorías de división de precios variables entre máximo y mínimo. El primero máximo y mínimo es desconocido. No tengo claro si sucede lo mismo con discount.
 - He probado con pocas categorías y subcategorías diferentes a moviles, sería necesario verificar que funciona bien.
 - A un futuro estaría bien añadir page, category, subcategory en el JSON de request. (Sencillo)
-
+- Falta introducir SKU para APIstock
 
 
