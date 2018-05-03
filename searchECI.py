@@ -130,11 +130,13 @@ def request_item_url(url):
     """
     Extracción de entidades a partir de la url de un producto. 
     """
+    
     r = requests.get(url)
     soup = BeautifulSoup(r.content,"html5lib")
     # buscamos en features caracteristicas e informacion del producto
     features = soup.find("div",{"id":"features"})
-    item_name = soup.find('div',{'id':'product-info'}).find('h2',{'class':'title'}).text
+    item_name = soup.find('div',{'id':'product-info'}).find('h2',{'class':'title'}).text.strip()
+    sku = soup.find('div',{'id':'product-info'}).find("span",{"id":"sku-ref"}).text.strip()
     description=features.find('div',{'id':'description'})
     description=description.text if description else "No disponible" # por si acaso no hay disponible descripcion
     price = soup.find('span',{'class':'current sale'})
@@ -149,8 +151,9 @@ def request_item_url(url):
             'price':price,
             'img':img,
             'href':url,
+            'sku':sku,
             'features':features_dict,
-    
+            
     }
 
 
