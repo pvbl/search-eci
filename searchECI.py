@@ -29,22 +29,27 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
         min_price = min_price if min_price else min(prices)
         
         keys = list(map(lambda x: x if ((x >= min_price) & (x<= max_price)) else None,prices))
-        _ = [filters_data.append(filters.prices_mapper[key]) for key in keys if key]
+        prices_filts='price::'+''.join([filters.prices_mapper[key] for key in keys if key])
+        
+        filters_data.append(prices_filts)
+       
     
     # en caso de que el usuario haya pedido con descuentos
     if discount:
         discounts = filters.discounts.keys()
         keys = list(map(lambda x: x if (x >= discount) else None,discounts))
-        _ = [filters_data.append(filters.discounts[key]) for key in keys if key]
+        discount_filts='discount::'+''.join([filters.discounts[key] for key in keys if key])
+        
+        filters_data.append(discount_filts)
 
     # en caso de estar nuestro producto (ej samsung) en nuestro filters.brands, lo utiliza para filtrar
     # en caso contrario (else), hace una busqueda generica 
     if product in list(map( lambda x: x.lower() , filters.brands.keys())):
         filters_data.append(filters.brands[product])
-        query = website + '/{0}/?f='.format(page)+ ','.join(map(str,filters_data)) + '&s={0}'.format(category)
+        query = website + '/{0}/?f='.format(page)+ '||'.join(map(str,filters_data)) + '&s={0}'.format(category)
     else:
         if filters_data:     
-            query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product + '?f='+ ','.join(map(str,filters_data))
+            query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product + '&f='+ '||'.join(map(str,filters_data))
         else:
             query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product
                  
