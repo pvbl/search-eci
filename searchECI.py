@@ -3,7 +3,6 @@ import os
 import requests
 import json
 import filters
-from lxml import etree
 
 
 
