@@ -3,11 +3,12 @@ import os
 import requests
 import json
 import filters
-     
+from lxml import etree
 
 
 
-def url_filter(product,price_range=[None,None],discount=None,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1):
+
+def url_filter(product,price_range=[None,None],discount=None,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1,sort_method='bestSellerQtyDesc'):
     """
     crea la url y genera filtros para las opciones indicadas en el json del Post.
     """
@@ -52,15 +53,16 @@ def url_filter(product,price_range=[None,None],discount=None,category = 'electro
             query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product + '&f='+ '||'.join(map(str,filters_data))
         else:
             query = website + 'search/{0}/?s={1}+'.format(page,helper_search) + product
-                 
+    if (sort_method in ['newInAsc','bestSellerQtyDesc','priceAsc','priceDesc','nameAsc','discountPerDesc','stockDesc']):
+        query = '{0}&sorting={1}'.format(query,sort_method)    
     return query 
 
 
-def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0,init_item=0,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1):
+def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,inumber = -1,limit=0,init_item=0,category = 'electronica',subcategory = 'moviles-y-smartphones',helper_search='telefono',page=1,sort_method='bestSellerQtyDesc'):
     """
     extrae los items de una URL del corte ingles generada con los filtros de la función url_filter.
     """
-    query = url_filter(product,price_range=[price_min,price_max],discount=discount,category=category,subcategory=subcategory,helper_search=helper_search,page=page)
+    query = url_filter(product,price_range=[price_min,price_max],discount=discount,category=category,subcategory=subcategory,helper_search=helper_search,page=page,sort_method=sort_method)
     print(query)
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
@@ -79,12 +81,21 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
             datajson = json.loads(dt['data-json'])
         else:
             continue
+        
         # extraemos datos por item que vamos a meter en el JSON de respuesta
         name = datajson["name"]
         img_href= "https:"+item.find("img")['src']
         id_ref=item.find("img")["id"].split('-')[1]       
         href = 'https://www.elcorteingles.es'+item.find('a',{'data-event':"product_click"})['href']
         price =datajson["price"]['final'] if "final" in datajson["price"] else None
+        if not price:
+            try:
+                price_original=item.find("div",{"class":"product-preview "}).find('div',{"class":'info'})
+                price_original=price_original.find("div",{"class":"product-price product-price-marketplace marketplace"})
+                price_original = price_original.find("span",{"class":"current sale"}) if price_original.find("span",{"class":"current sale"}) else price_original.find("span",{"class":"current "})
+                price=price_original.text
+            except:
+                pass
         discount=int(item.find('span',{'class':'discount'}).text.replace("%","")) if item.find('span',{'class':'discount'})  else None
         item_json={'name':name,'image':img_href,'price':price,'index':i,'discount':discount,'href':href,'id':id_ref}
         #items_parsed.append("{0}: {1} {2} ".format(i,name ,price))
@@ -125,9 +136,10 @@ def response_db(req,parameter='item'):
     helper_search=parameters.get("helper_search") if parameters.get("helper_search") is not None else 'telefono'
     page=parameters.get("page") if parameters.get("page") else 1
     init_item=parameters.get("init_item") if parameters.get("init_item") else 0
+    sort_method=parameters.get("sort_method") if parameters.get("sort_method") else 'bestSellerQtyDesc'
 
     # A partir de estos parametros generamos el JSON de salida
-    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,init_item=init_item,limit=limit,category=category,subcategory=subcategory,helper_search=helper_search,page=page)
+    items_parsed = request_el_corte_ingles(item,price_min=price_min,price_max=price_max,discount=discount,inumber = inumber,init_item=init_item,limit=limit,category=category,subcategory=subcategory,helper_search=helper_search,page=page,sort_method=sort_method)
     return items_parsed
 
 
@@ -144,7 +156,7 @@ def request_item_url(url):
     sku = soup.find('div',{'id':'product-info'}).find("span",{"id":"sku-ref"}).text.strip()
     description=features.find('div',{'id':'description'})
     description=description.text if description else "No disponible" # por si acaso no hay disponible descripcion
-    price = soup.find('span',{'class':'current sale'})
+    price = soup.find('span',{'class':'current sale'}) if soup.find('span',{'class':'current sale'}) else soup.find('span',{'class':'current'})
     price=price.text if price else "No disponible" # por si acaso no hay disponible precio
     img = 'https:'+soup.find('img',{'id':'product-image-placer'})['src']
     features_esp = soup.find("div",{"class":"product-features c12"}) # textraccion de caracteristicas del item
