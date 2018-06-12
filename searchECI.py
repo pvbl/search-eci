@@ -65,9 +65,11 @@ def request_el_corte_ingles(product,price_min=None,price_max=None,discount=None,
     print(query)
     r = requests.get(query)
     soup = BeautifulSoup(r.content,"html5lib")
+    print(soup)
     # buscamos la lista de productos que se muestra en la web (he visto dos casos de clases que los contiene
     # product-list 4 (en smatphones) y product-list (en ropa)
     items = soup.find("ul",{"class":"product-list 4"}) if soup.find("ul",{"class":"product-list 4"}) else soup.find("ul",{"class":"product-list"})
+    print(items)
     # si no encuentra items, devuelve items=[]
     if not items: 
        items=[]
