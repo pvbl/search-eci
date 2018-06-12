@@ -146,7 +146,7 @@ def request_item_url(url):
     """
     Extracción de entidades a partir de la url de un producto. 
     """
-    
+    print(url)
     r = requests.get(url)
     soup = BeautifulSoup(r.content,"html5lib")
     # buscamos en features caracteristicas e informacion del producto
