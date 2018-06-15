@@ -156,7 +156,7 @@ def request_item_url(url):
     description=features.find('div',{'id':'description'})
     description=description.text if description else "No disponible" # por si acaso no hay disponible descripcion
     price = soup.find('span',{'class':'current sale'}) if soup.find('span',{'class':'current sale'}) else soup.find('span',{'class':'current'})
-    price=price.text if price else "No disponible" # por si acaso no hay disponible precio
+    price=price.text if price else "" # por si acaso no hay disponible precio
     img = 'https:'+soup.find('img',{'id':'product-image-placer'})['src']
     features_esp = soup.find("div",{"class":"product-features c12"}) # textraccion de caracteristicas del item
     features_key = features_esp.find_all('dt')
